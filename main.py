@@ -4,8 +4,9 @@ from flask import request
 from flask import json
 from flask import make_response
 from werkzeug.exceptions import HTTPException
-from count_token import num_tokens_from_message
+from count_token import num_tokens_from_messages
 from waitress import serve
+import base64
 
 app = Flask(__name__)
 
@@ -18,12 +19,14 @@ def count_token():
         "message": "Something wrong!"
     })
     try:
-        if request.is_json and request.json.get('message'):
-            message = request.json.get('message')
+        if request.is_json and request.json.get('messages'):
+            messages = request.json.get('messages')
             model = request.json.get('model') or "gpt-3.5-turbo"
-            print(model)
-            if message:
-                tokens = num_tokens_from_message(message, model)
+            if messages:
+                messages = base64.b64decode(messages)
+                messages = json.loads(messages)
+
+                tokens = num_tokens_from_messages(messages, model)
                 response.data = json.dumps({
                     "success": True,
                     "tokens": tokens
